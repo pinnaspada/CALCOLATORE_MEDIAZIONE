@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calcolatore Spese di Mediazione - Campi Selezionati</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for Inter font and general aesthetics */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Light gray background */
+        }
+        .card {
+            background-color: #ffffff;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e5e7eb;
+        }
+        .input-field {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+            font-size: 1.125rem; /* text-lg */
+            color: #374151; /* gray-800 */
+        }
+        .result-box {
+            padding: 1.25rem;
+            border-radius: 0.5rem;
+            border: 1px solid;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: flex-start;
+            min-height: 100px; /* Ensure consistent height for boxes */
+        }
+        .result-box h3 {
+            font-size: 1rem; /* text-base */
+            font-weight: 600; /* font-semibold */
+            margin-bottom: 0.5rem;
+        }
+        .result-box p {
+            font-size: 1.625rem; /* text-2xl to text-3xl */
+            font-weight: 700; /* font-bold */
+            color: #1f2937; /* gray-900 */
+        }
+        .result-box.green { border-color: #a7f3d0; background-color: #ecfdf5; } /* green-200, green-50 */
+        .result-box.red { border-color: #fca5a5; background-color: #fef2f2; }   /* red-200, red-50 */
+        .result-box.purple { border-color: #d8b4fe; background-color: #f3e8ff; } /* purple-200, purple-50 */
+        .result-box.orange { border-color: #fed7aa; background-color: #fff7ed; } /* orange-200, orange-50 */
+    </style>
+</head>
+<body class="p-4 sm:p-6 md:p-8 lg:p-10 flex justify-center items-center min-h-screen">
+    <div class="card w-full max-w-3xl">
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-6 text-center">Calcolatore Spese di Mediazione</h1>
+        <p class="text-gray-600 mb-8 text-center">Inserisci il valore della lite per calcolare le spese di mediazione.</p>
+
+        <div class="mb-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
+            <label for="valoreLite" class="block text-xl font-semibold text-blue-800 mb-3">Valore della Lite (€):</label>
+            <input type="number" id="valoreLite" placeholder="Es. 15000"
+                   class="input-field focus:ring-blue-500 focus:border-blue-500"
+                   min="0" step="0.01">
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="result-box green">
+                <h3>SPESE DI AVVIO (€):</h3>
+                <p id="speseDiAvvioOutput" class="text-green-700 text-3xl">0,00</p>
+            </div>
+
+            <div class="result-box purple">
+                <h3>ESITO NEGATIVO SUCCESSIVAMENTE AL 1° INCONTRO (€):</h3>
+                <p id="esitoNegativoOutput" class="text-purple-700">0,00</p>
+            </div>
+
+            <div class="result-box orange">
+                <h3>ESITO POSITIVO AL PRIMO INCONTRO (€):</h3>
+                <p id="esitoPositivoPrimoIncontroOutput" class="text-orange-700">0,00</p>
+            </div>
+
+            <div class="result-box red">
+                <h3>ESITO POSITIVO DOPO IL PRIMO INCONTRO (€):</h3>
+                <p id="esitoPositivoDopoPrimoIncontroOutput" class="text-red-700 text-3xl">0,00</p>
+            </div>
+        </div>
+
+        <p class="text-gray-600 text-sm mt-8 text-center">
+            Calcolatore realizzato con AI da Avv. Antonio Pinna Spada, Responsabile Camera di Media Conciliazione Forense dell'Ordine degli Avvocati di Oristano, Organismo di Mediazione del Consiglio dell'Ordine degli Avvocati di Sassari
+        </p>
+    </div>
+
+    <script>
+        // Define the mediation tiers data based on your Excel table structure
+        const mediationTiers = [
+            // Valore Min Lite, Valore Max Lite, Spese Min, Spese Max, Spese fisse scaglione, Spese di Avvio
+            { minLite: 0, maxLite: 1000, minFee: 78.08, maxFee: 156.16, fixedCost: 58.56, startupCost: 39.04 },
+            { minLite: 1001, maxLite: 5000, minFee: 156.16, maxFee: 283.04, fixedCost: 117.12, startupCost: 73.20 },
+            { minLite: 5001, maxLite: 10000, minFee: 283.04, maxFee: 429.44, fixedCost: 117.12, startupCost: 73.20 },
+            { minLite: 10001, maxLite: 25000, minFee: 429.44, maxFee: 702.72, fixedCost: 117.12, startupCost: 73.20 },
+            { minLite: 25001, maxLite: 50000, minFee: 702.72, maxFee: 1171.2, fixedCost: 117.12, startupCost: 73.20 },
+            { minLite: 50001, maxLite: 150000, minFee: 1171.2, maxFee: 1464, fixedCost: 165.92, startupCost: 107.36 },
+            { minLite: 150001, maxLite: 250000, minFee: 1464, maxFee: 2440, fixedCost: 165.92, startupCost: 107.36 },
+            { minLite: 250001, maxLite: 500000, minFee: 2440, maxFee: 3806.4, fixedCost: 165.92, startupCost: 107.36 },
+            { minLite: 500001, maxLite: 1500000, minFee: 3806.4, maxFee: 4489.6, fixedCost: 165.92, startupCost: 107.36 },
+            { minLite: 1500001, maxLite: 2500000, minFee: 4489.6, maxFee: 6344, fixedCost: 165.92, startupCost: 107.36 },
+            { minLite: 2500001, maxLite: 5000000, minFee: 6344, maxFee: 9760, fixedCost: 165.92, startupCost: 107.36 }
+        ];
+
+        // Get DOM elements for input and output
+        let valoreLiteInput;
+        let speseDiAvvioOutput;                  // Corrisponde a SPESE DI AVVIO
+        let esitoNegativoOutput;                 // Corrisponde a ESITO NEGATIVO SUCCESSIVAMENTE AL 1° INCONTRO
+        let esitoPositivoPrimoIncontroOutput;    // Corrisponde a ESITO POSITIVO AL PRIMO INCONTRO
+        let esitoPositivoDopoPrimoIncontroOutput; // Corrisponde a ESITO POSITIVO DOPO IL PRIMO INCONTRO
+
+        /**
+         * Formats a number to a fixed 2 decimal places and uses comma as decimal separator.
+         * @param {number} num - The number to format.
+         * @returns {string} Formatted string.
+         */
+        function formatCurrency(num) {
+            if (typeof num !== 'number' || isNaN(num)) {
+                return '0,00';
+            }
+            return num.toFixed(2).replace('.', ',');
+        }
+
+        /**
+         * Calculates the mediation cost based on the provided lite value.
+         */
+        function calculateMediationCost() {
+            let rawValue = valoreLiteInput.value;
+            let valoreLite = parseFloat(rawValue);
+
+            // Handle empty, non-numeric, or negative input: reset all outputs to '0,00'
+            if (isNaN(valoreLite) || rawValue.trim() === '' || valoreLite < 0) {
+                speseDiAvvioOutput.textContent = '0,00';
+                esitoNegativoOutput.textContent = '0,00';
+                esitoPositivoPrimoIncontroOutput.textContent = '0,00';
+                esitoPositivoDopoPrimoIncontroOutput.textContent = '0,00';
+                return; // Exit the function
+            }
+
+            let tier = null;
+            let finalFee = 0;
+            let currentMinFee = 0;
+            let currentMaxFee = 0;
+            let currentFixedCost = 0;
+            let currentStartupCost = 0;
+            let currentMinLiteTier = 0;
+            let currentMaxLiteTier = 0;
+            let incrementoProporzionale = 0;
+
+            // Find the correct tier
+            for (let i = 0; i < mediationTiers.length; i++) {
+                if (mediationTiers[i].minLite === 0 && valoreLite >= mediationTiers[i].minLite && valoreLite <= mediationTiers[i].maxLite) {
+                    tier = mediationTiers[i];
+                    break;
+                }
+                if (valoreLite >= mediationTiers[i].minLite && valoreLite <= mediationTiers[i].maxLite) {
+                    tier = mediationTiers[i];
+                    break;
+                }
+            }
+
+            // Handle case where value exceeds the highest defined tier
+            if (!tier && valoreLite > mediationTiers[mediationTiers.length - 1].maxLite) {
+                tier = mediationTiers[mediationTiers.length - 1]; // Use the last tier's values
+                currentMinFee = tier.minFee;
+                currentMaxFee = tier.maxFee;
+                currentFixedCost = tier.fixedCost;
+                currentStartupCost = tier.startupCost;
+                finalFee = tier.maxFee; // The total fee is fixed at the max of the last tier
+                incrementoProporzionale = 0;
+            } else if (!tier) {
+                speseDiAvvioOutput.textContent = 'N/D';
+                esitoNegativoOutput.textContent = 'N/D';
+                esitoPositivoPrimoIncontroOutput.textContent = 'N/D';
+                esitoPositivoDopoPrimoIncontroOutput.textContent = 'N/D';
+                return;
+            }
+
+            // If a tier was found (or last tier used for exceeding values)
+            if (tier) {
+                currentMinFee = tier.minFee;
+                currentMaxFee = tier.maxFee;
+                currentMinLiteTier = tier.minLite;
+                currentMaxLiteTier = tier.maxLite;
+                currentFixedCost = tier.fixedCost;
+                currentStartupCost = tier.startupCost;
+
+                if (currentMaxLiteTier - currentMinLiteTier > 0 && valoreLite >= currentMinLiteTier && valoreLite <= currentMaxLiteTier) {
+                    incrementoProporzionale = ((currentMaxFee - currentMinFee) * (valoreLite - currentMinLiteTier) / (currentMaxLiteTier - currentMinLiteTier));
+                } else if (valoreLite < currentMinLiteTier && currentMinLiteTier !== 0) {
+                    incrementoProporzionale = 0;
+                } else if (valoreLite >= currentMaxLiteTier && currentMaxLiteTier !== 0) {
+                    incrementoProporzionale = currentMaxFee - currentMinFee;
+                } else {
+                    incrementoProporzionale = 0;
+                }
+                incrementoProporzionale = Math.max(0, incrementoProporzionale);
+
+                finalFee = currentMinFee + incrementoProporzionale;
+
+                // Calcoli intermedi necessari per i campi finali
+                const importoBaseMaggiorazione = Math.max(0, finalFee - currentFixedCost);
+                const maggiorazione10Percent = importoBaseMaggiorazione * 0.10;
+                const maggiorazione25Percent = importoBaseMaggiorazione * 0.25;
+
+                // Logiche di calcolo per i campi richiesti:
+                // SPESE DI AVVIO (corrisponde a B13 in Excel)
+                // Formula: B11 + B12_da_tabella_scaglione
+                const speseDiAvvioCalculated = currentFixedCost + currentStartupCost;
+
+                // ESITO NEGATIVO SUCCESSIVAMENTE AL 1° INCONTRO (corrisponde a B14 in Excel)
+                // Formula: MAX(0; B10 - B11)
+                const esitoNegativoDopoPrimoIncontro = Math.max(0, finalFee - currentFixedCost);
+
+                // ESITO POSITIVO AL PRIMO INCONTRO (corrisponde a B16 in Excel)
+                // Formula: B10 + B15 - B12 (dove B15 è Maggiorazione 10%, B12 è Spese fisse scaglione)
+                const esitoPositivoPrimoIncontro = finalFee + maggiorazione10Percent - currentFixedCost;
+
+                // ESITO POSITIVO DOPO IL PRIMO INCONTRO (corrisponde a B19 in Excel)
+                // Formula: B10 + B17 - B12 (dove B17 è Maggiorazione 25%, B12 è Spese fisse scaglione)
+                const esitoPositivoDopoPrimoIncontro = finalFee + maggiorazione25Percent - currentFixedCost;
+
+
+                // Update DOM elements with calculated values
+                speseDiAvvioOutput.textContent = formatCurrency(speseDiAvvioCalculated);
+                esitoNegativoOutput.textContent = formatCurrency(esitoNegativoDopoPrimoIncontro);
+                esitoPositivoPrimoIncontroOutput.textContent = formatCurrency(esitoPositivoPrimoIncontro);
+                esitoPositivoDopoPrimoIncontroOutput.textContent = formatCurrency(esitoPositivoDopoPrimoIncontro);
+            }
+        }
+
+        // Ensure DOM elements are available before attaching listeners or populating
+        document.addEventListener('DOMContentLoaded', () => {
+            valoreLiteInput = document.getElementById('valoreLite');
+            speseDiAvvioOutput = document.getElementById('speseDiAvvioOutput');
+            esitoNegativoOutput = document.getElementById('esitoNegativoOutput');
+            esitoPositivoPrimoIncontroOutput = document.getElementById('esitoPositivoPrimoIncontroOutput');
+            esitoPositivoDopoPrimoIncontroOutput = document.getElementById('esitoPositivoDopoPrimoIncontroOutput');
+
+            if (valoreLiteInput) {
+                valoreLiteInput.addEventListener('input', calculateMediationCost);
+            }
+
+            calculateMediationCost(); // Run once on load to initialize values
+        });
+    </script>
+</body>
+</html>
